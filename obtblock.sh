@@ -1,6 +1,5 @@
 #/usr/bin/env bash
 
-#assuming wget exist on image
 #obtain dnsmasq block list and set configuration
 
 
