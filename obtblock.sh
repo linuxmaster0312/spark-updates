@@ -7,7 +7,7 @@
 wget https://github.com/notracking/hosts-blocklists/raw/master/dnsmasq/dnsmasq.blacklist.txt
 
 DIR=$(pwd)
-echo "conf-file=${DIR}/dnsmasq.blacklist.txt
+echo "conf-file=${DIR}/dnsmasq.blacklist.txt" >> /etc/dnsmasq.d/SoftAp0
 
 systemctl restart dnsmasq
 
