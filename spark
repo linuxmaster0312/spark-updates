@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#commands usage for spark
+
+addAdd() {
+  echo "Enter a website domain name to blacklist"
+  echo "e.g. examplewebsite.com"
+  read ADDRESS
+  echo "address=/${ADDRESS}/#" >> /spark/blocklist/sparklist
+}
+
+remAdd() {
+  echo "Enter a website domain name to whitelist"
+  echo "e.g. examplewebsite.com"
+  read ADDRESS
+  sed -i "/${ADDRESS}.*/d" /spark/blocklist/sparklist
+}
+
+enableBlock() {
+  echo "options:
+    -s, session   disable blocking for session
+    -p, permanent disable even after reboot"
+}
+
+updateList() {
+  . /spark/update.sh
+  systemctl restart dnsmasq
+}
+
+read option
+case $option in
+    "-a" | "add"     ) addAdd;;
+    "-r" | "name"    ) remAdd;;
+    "
+
+esac
+
+exit 0
