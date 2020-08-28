@@ -1,10 +1,10 @@
-#/usr/bin/env bash
+#!/bin/bash
 
 #obtain dnsmasq block list
 
-rm /spark/blocklist/dnsmasq.blacklist.txt
+rm /spark/blocklist/sparklist
 
-wget -P /spark/blocklist/https://github.com/notracking/hosts-blocklists/raw/master/dnsmasq/dnsmasq.blacklist.txt
+wget -O /spark/blocklist/sparklist https://github.com/notracking/hosts-blocklists/raw/master/dnsmasq/dnsmasq.blacklist.txt
 
 exit 0
 
