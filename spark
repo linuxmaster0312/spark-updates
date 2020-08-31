@@ -13,14 +13,62 @@ remAdd() {
   echo "Enter a website domain name to whitelist"
   echo "e.g. examplewebsite.com"
   read ADDRESS
-  sed -i "/${ADDRESS}.*/d" /spark/blocklist/sparklist
+  sed -i "/^${ADDRESS}.*/d" /spark/blocklist/sparklist
+  
 }
 
 enableBlock() {
-  echo "options:
-    -s, session   disable blocking for session
-    -p, permanent disable even after reboot"
+  . /spark/update.sh
+
+
 }
+
+disableBlock() {
+   session() {
+      sed -i 's|conf-file=/spark/blocklist/sparklist| |' /etc/dnsmasq.d/SoftAp0
+      if [ 'grep -q "dnssec" /etc/dnsmasq.d/SoftAp0' ]; then
+          sed -i 's|dnssec| |' /etc/dnsmasq.d/SoftAp0
+          sed -i 's|conf-file=/usr/share/dnsmasq-base/trust-anchors.conf| |' /etc/dnsmasq.d/SoftAp0
+      fi
+      systemctl restart dnsmasq
+   }
+   
+   permanent() {
+      #session
+      sed -i 's|conf-file=/spark/blocklist/sparklist| |' /etc/dnsmasq.d/SoftAp0
+      sed -i 's|conf-file=/usr/share/dnsmasq-base/trust-anchors.conf| |' /etc/dnsmasq.d/SoftAp0
+      if [ 'grep -q "dnssec" /etc/dnsmasq.d/SoftAp0' ]; then
+          sed -i 's|dnssec| |' /etc/dnsmasq.d/SoftAp0
+          sed -i 's|conf-file=/usr/share/dnsmasq-base/trust-anchors.conf| |' /etc/dnsmasq.d/SoftAp0
+      fi
+      #am335x
+      sed -i 's|echo "conf-file=/spark/blocklist/sparklist" >> ${wfile}| |' /opt/scripts/boot/am335x_evm.sh
+      if [ 'grep -q "dnssec" /opt/scripts/boot/am335x_evm.sh' ]; then
+          sed -i 's|echo "conf-file=/usr/share/dnsmasq-base/trust-anchors.conf" >> ${wfile}| |' /opt/scripts/boot/am335x_evm.sh
+          sed -i 's|echo "dnssec" >> ${wfile}| |' /opt/scripts/boot/am335x_evm.sh
+      fi
+      #bb_dnsmasq_config
+      sed -i 's|echo "conf-file=/spark/blocklist/sparklist" >> ${wfile}| |' /usr/bin/bb_dnsmasq_config.sh
+      if [ 'grep -q "dnssec" /usr/bin/bb_dnsmasq_config.sh' ]; then
+          sed -i 's|echo "conf-file=/usr/share/dnsmasq-base/trust-anchors.conf" >> ${wfile}| |' /usr/bin/bb_dnsmasq_config.sh
+          sed -i 's|echo "dnssec" >> ${wfile}| |' /usr/bin/bb_dnsmasq_config.sh
+      fi
+
+   }
+
+    echo 'options:
+    -s, session      disable blocking for session
+    -p, permanent    disable even after reboot
+    You can enable blocking manually in both options but 
+    a permanent disable requires a manual restart with the
+    "spark -e" command.'
+    read option
+    case $option in
+        "-s" | "session"   ) session;;
+        "-p" | "permanent" ) permanent;;
+    esac 
+}
+
 
 updateList() {
   . /spark/update.sh
