@@ -1,6 +1,13 @@
 #!/bin/bash
-
 #commands usage for spark
+declare BLOCK
+declare SEC
+
+if `grep -q "conf-file=/spark/blocklist/sparklist" /etc/dnsmasq.d/SoftAp0` && `grep -q "conf-file=/spark/blocklist/sparklist" /opt/scripts/boot/am335x_evm.sh`; then
+  BLOCK="yes"
+else 
+  BLOCK="no"
+fi
 
 addAdd() {
   echo "Enter a website domain name to blacklist"
@@ -17,12 +24,67 @@ remAdd() {
   
 }
 
-enableBlock() {
-  . /spark/update.sh
+dnssec() {
+  yes() {
+    SEC="yes"
+  }
 
+  no() {
+    SEC="no"
+  }
 
+    if [[ "$@" == *"-y"* ]]; then
+        yes
+    else
+        no
+    fi 
 }
 
+enableBlock() {
+
+  permanent() {
+    #am335x note that line numbers may vary
+    sed -i "702i echo 'conf-file=/spark/blocklist/sparklist' >> " /opt/scripts/boot/am335x_evm.sh
+      if [[ "$SEC" == *"yes"* ]]; then
+        sed -i "703i echo 'conf-file=/usr/share/dnsmasq-base/trust-anchors.conf' >> " /opt/scripts/boot/am335x_evm.sh
+        sed -i "704i echo 'dnssec' >> " /opt/scripts/boot/am335x_evm.sh
+        sed -i '/.*dnssec.*/s/$/${wfile}/' /opt/scripts/boot/am335x_evm.sh
+      fi
+    sed -i '/.*conf-file=.*/s/$/${wfile}/' /opt/scripts/boot/am335x_evm.sh
+    #bb_dnsmasq_config
+    sed -i "60i echo 'conf-file=/spark/blocklist/sparklist' >> " /usr/bin/bb_dnsmasq_config.sh
+      if [[ "$SEC" == *"yes"* ]]; then
+        sed -i "61i echo 'conf-file=/usr/share/dnsmasq-base/trust-anchors.conf' >> " /usr/bin/bb_dnsmasq_config.sh
+        sed -i "62i echo 'dnssec' >> " /usr/bin/bb_dnsmasq_config.sh
+        sed -i '/.*dnssec.*/s/$/${wfile}/'
+      fi
+    sed -i '/.*conf-file=.*/s/$/${wfile}/' /usr/bin/bb_dnsmasq_config.sh
+  }
+
+  session() {
+    #SoftAp0
+    echo "conf-file=/spark/blocklist/sparklist" >> /etc/dnsmasq.d/SoftAp0
+      if [[ "$SEC" == *"yes"* ]]; then
+        echo "conf-file=/usr/share/dnsmasq-base/trust-anchors.conf" >> /etc/dnsmasq.d/SoftAp0
+        echo "dnssec" >> /etc/dnsmasq.d/SoftAp0
+      fi
+  }
+
+  if [[ "$BLOCK" == *"no"* ]]; then 
+    #update blocklist
+    . /spark/update.sh
+
+    if [[ "$@" == *"-s"* ]]; then
+      session
+    else
+      permanent
+    fi
+
+  else 
+    echo "Invalid usage, blocking is already enabled."  
+  fi
+}
+#includes more options
 disableBlock() {
    session() {
       sed -i 's|conf-file=/spark/blocklist/sparklist| |' /etc/dnsmasq.d/SoftAp0
@@ -56,31 +118,39 @@ disableBlock() {
 
    }
 
-    echo 'options:
-    -s, session      disable blocking for session
-    -p, permanent    disable even after reboot
-    You can enable blocking manually in both options but 
-    a permanent disable requires a manual restart with the
-    "spark -e" command.'
-    read option
-    case $option in
-        "-s" | "session"   ) session;;
-        "-p" | "permanent" ) permanent;;
-    esac 
+   if [[ "$BLOCK" == *"yes"* ]]; then
+
+
+      if [[ "$@" == *"-s"* ]]; then
+          session
+      else 
+          permanent
+      fi
+    #echo 'options:
+    #-s, session      disable blocking for session
+    #-p, permanent    disable even after reboot
+    #You can enable blocking manually in both options but 
+    #a permanent disable requires a manual restart with the
+    #"spark -e" command.'
 }
 
-
+#includes more options
 updateList() {
   . /spark/update.sh
   systemctl restart dnsmasq
 }
 
+
+
 read option
 case $option in
     "-a" | "add"     ) addAdd;;
     "-r" | "name"    ) remAdd;;
-    "
-
+    "-e" | "enable"  ) enableBlock;;
+    "-d" | "disable" ) disableBlock;;
+    "-u" | "update"  ) updateList;;
+    "-s" | "dnssec"  ) dnssec;;
 esac
 
 exit 0
+
