@@ -2,6 +2,6 @@
 #image updates go here
 
 cd /spark
-touch shouldexist.txt 
+touch cronjobworks.txt
 echo 'updates are done'
 exit 0
