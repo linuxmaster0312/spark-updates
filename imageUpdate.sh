@@ -1,7 +1,7 @@
 #!/bin/bash
 #image updates go here
 cd /spark
-touch itworksman.txt
+touch forthelasttimeitworks.txt
 
 
 exit 0
