@@ -2,7 +2,7 @@
 #image updates go here
 cd /spark
 
-touch forthelasttimeitworks.txt
+crontab -r
 
 echo 'updates have finished installing'
 
